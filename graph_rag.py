@@ -1,46 +1,17 @@
 from datetime import datetime
-import networkx as nx
-from typing import List, Dict, Any
+from typing import Any, Dict, List
 
+import networkx as nx
+from langchain.callbacks.manager import CallbackManagerForRetrieverRun
 from langchain.chains import RetrievalQA
 from langchain.prompts import PromptTemplate
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
 from langchain_core.documents import Document
 from langchain_core.retrievers import BaseRetriever
-from langchain.callbacks.manager import CallbackManagerForRetrieverRun
 
-from events import generate_events
+from events import generate_events, make_documents
 from llama_config import load_llm
-
-
-def make_documents(events):
-    docs = []
-    for idx, e in enumerate(events):
-        # Determine ordinal suffix for idx+1
-        n = idx + 1
-        if 10 <= n % 100 <= 20:
-            suffix = 'th'
-        else:
-            suffix = {1: 'st', 2: 'nd', 3: 'rd'}.get(n % 10, 'th')
-        ordinal = f"{n}{suffix}"
-
-        content = (
-            f"This is the {ordinal} event. "
-            f"At {e['time']}, the device '{e['device_name']}' located at '{e['location']}' "
-            f"detected the event: '{e['event_name']}'. "
-            f"Video evidence is available at: {e['video']}."
-        )
-        metadata = {
-            "time": e['time'],
-            "location": e['location'],
-            "event_name": e['event_name'],
-            "device_name": e['device_name'],
-            "video_link": e['video'],
-            "event_id": f"event_{idx}" # Add a unique ID for graph nodes
-        }
-        docs.append(Document(page_content=content, metadata=metadata))
-    return docs
 
 
 # --- NEW: Graph Construction Function ---
@@ -203,21 +174,21 @@ class CustomGraphRetriever(BaseRetriever):
 
 
 def main():
-    print("🔧 準備事件資料與 LLM...")
+    print("🔧 Preparing event data and LLM ...")
     events = generate_events(30) # Assuming generate_events provides events with time, device_name, location, event_name, video
 
     # Sort events by time
     try:
         events.sort(key=lambda x: datetime.strptime(x['time'], '%Y-%m-%d %H:%M'))
-        print("✅ 事件已按時間排序。")
+        print("✅ Events sorted by time.")
     except KeyError:
-        print("⚠️ 警告: 事件字典中沒有 'time' 鍵，無法排序。")
+        print("⚠️ Warning: No 'time' key in event dictionary, cannot sort.")
     except ValueError as ve:
-        print(f"⚠️ 警告: 'time' 格式不正確，無法排序。錯誤: {ve}")
+        print(f"⚠️ Warning: 'time' format incorrect, cannot sort. Error: {ve}")
 
     # Optional: print sorted events (uncomment if needed for debugging)
     for i, e in enumerate(events):
-        print(f"事件 {i+1}: {e}") 
+        print(f"Event {i+1}: {e}") 
 
     docs = make_documents(events)
     
@@ -264,17 +235,17 @@ def main():
         return_source_documents=True 
     )
 
-    print("\n🧠 啟動成功！請輸入自然語言問題（輸入 `exit` 結束）")
+    print("\n🧠 System started! Please enter a natural language question (type `exit` to quit)")
 
     while True:
-        query = input("\n❓ 你的問題： ")
+        query = input("\n❓ Your question: ")
         if query.strip().lower() in ["exit", "quit", "q"]:
-            print("👋 結束對話，感謝使用！")
+            print("👋 Ending conversation, thank you for using!")
             break
         
         result = qa.invoke({"query": query})
-        print(f"\n📣 回答：\n{result['result']}")
-        print(f"\n📚 參考資料：\n{[doc.metadata for doc in result['source_documents']]}")
+        print(f"\n📣 Answer:\n{result['result']}")
+        print(f"\n📚 Reference documents:\n{[doc.metadata for doc in result['source_documents']]}")
 
 if __name__ == "__main__":
     main()

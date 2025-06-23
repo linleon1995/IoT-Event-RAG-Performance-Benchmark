@@ -6,52 +6,24 @@ from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
 from langchain_core.documents import Document
 
-from events import generate_events
+from events import generate_events, make_documents
 from llama_config import load_llm
 
 
-def make_documents(events):
-    docs = []
-    for idx, e in enumerate(events):
-        # Determine ordinal suffix for idx+1
-        n = idx + 1
-        if 10 <= n % 100 <= 20:
-            suffix = 'th'
-        else:
-            suffix = {1: 'st', 2: 'nd', 3: 'rd'}.get(n % 10, 'th')
-        ordinal = f"{n}{suffix}"
-
-        content = (
-            f"This is the {ordinal} event. "
-            f"At {e['time']}, the device '{e['device_name']}' located at '{e['location']}' "
-            f"detected the event: '{e['event_name']}'. "
-            f"Video evidence is available at: {e['video']}."
-        )
-        metadata = {
-            "time": e['time'],
-            "location": e['location'],
-            "event_name": e['event_name'],
-            "device_name": e['device_name'],
-            "video_link": e['video'] # 鍵名可以取得更有意義
-        }
-        docs.append(Document(page_content=content, metadata=metadata))
-    return docs
-
-
 def main():
-    print("🔧 準備事件資料與 LLM...")
+    print("🔧 Preparing event data and LLM ...")
     events = generate_events(30)
     try:
         events.sort(key=lambda x: datetime.strptime(x['time'], '%Y-%m-%d %H:%M'))
-        print("✅ 事件已按時間排序。")
+        print("✅ Events sorted by time.")
     except KeyError:
-        print("⚠️ 警告: 事件字典中沒有 'time' 鍵，無法排序。")
+        print("⚠️ Warning: No 'time' key in event dictionary, cannot sort.")
     except ValueError as ve:
-        print(f"⚠️ 警告: 'time' 格式不正確，無法排序。錯誤: {ve}")
-    # --- 排序邏輯結束 ---
+        print(f"⚠️ Warning: 'time' format incorrect, cannot sort. Error: {ve}")
+    # --- End of sorting logic ---
 
     for i, e in enumerate(events):
-        print(f"事件 {i+1}: {e}") # 排序後再印出，確認順序
+        print(f"Event {i+1}: {e}") # Print after sorting to confirm order
     docs = make_documents(events)
 
     embedding = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
@@ -79,31 +51,32 @@ def main():
         template=prompt_template, input_variables=["context", "question"]
     )
 
-    # 在建立 QA Chain 時傳入 prompt
+    # Pass the prompt when creating the QA Chain
     chain_type_kwargs = {"prompt": PROMPT}
     qa = RetrievalQA.from_chain_type(
         llm=llm,
         retriever=vectorstore.as_retriever(
-            search_type="mmr", # 或者 "similarity"
-            search_kwargs={'k': 30, 'fetch_k': 40} # <--- 增加 k 和 fetch_k
+            search_type="mmr", # or "similarity"
+            search_kwargs={'k': 30, 'fetch_k': 40} # <--- Increase k and fetch_k
         ),
         chain_type_kwargs=chain_type_kwargs,
-        return_source_documents=True # 建議開啟，方便除錯
+        return_source_documents=True # Recommended to enable for easier debugging
     )
 
-    print("\n🧠 啟動成功！請輸入自然語言問題（輸入 `exit` 結束）")
+    print("\n🧠 System started! Please enter a natural language question (type `exit` to quit)")
 
     while True:
-        query = input("\n❓ 你的問題： ")
+        query = input("\n❓ Your question: ")
         if query.strip().lower() in ["exit", "quit", "q"]:
-            print("👋 結束對話，感謝使用！")
+            print("👋 Ending conversation, thank you for using!")
             break
         
         # answer = qa.run(query)
-        # print(f"\n📣 回答：\n{answer}")
+        # print(f"\n📣 Answer:\n{answer}")
         result = qa.invoke({"query": query})
-        print(f"\n📣 回答：\n{result['result']}")
-        print(f"\n📚 參考資料：\n{[doc.metadata for doc in result['source_documents']]}")
+        print(f"\n📣 Answer:\n{result['result']}")
+        print(f"\n📚 Reference documents:\n{[doc.metadata for doc in result['source_documents']]}")
+
 
 if __name__ == "__main__":
     main()
