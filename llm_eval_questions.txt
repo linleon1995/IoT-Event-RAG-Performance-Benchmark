@@ -1,0 +1,62 @@
+List of Diverse and Challenging LLM Event Reasoning Questions
+
+---
+
+Reasoning & Inference
+
+1. Which locations had both Fire Alarm and Power Outage events?
+2. Which device was involved in all three types of events: Fire Alarm, Unauthorized Access, and Water Leak?
+3. Are there any instances where multiple different event types occurred in the same location on the same day?
+List all the instances where multiple different event types occurred in the same location on the same day?
+
+---
+
+Temporal Reasoning
+
+4. What was the first event recorded in Building A?
+5. What was the 4th event recorded in Building B?
+6. What event happened just before the Fire Alarm in the Warehouse at 2025-06-09 09:04?
+7. List all events that happened between 2025-06-06 00:00 and 2025-06-08 00:00.
+
+---
+
+Location-Based Queries
+
+8. How many unique event types were recorded in the Lobby?
+9. List all devices that reported events in Building B.
+10. Which location experienced the most Unauthorized Access events?
+
+---
+
+Video Metadata Use
+
+11. Find all video filenames where Sensor_A detected a Water Leak.
+12. Which event corresponds to video_13.mp4?
+13. List all video files related to Drone_X.
+
+---
+
+Aggregation / Counting
+
+14. How many Power Outage events occurred overall?
+15. Which device was involved in the most events?
+16. Count how many events happened at each location.
+
+---
+
+Event Pattern Discovery
+
+17. Is there a pattern in the times when Fire Alarm events are detected (e.g., mostly morning, afternoon)?
+18. List events that occurred more than once in the same location by the same device.
+
+---
+
+LLM Robustness Check (Ambiguity / Natural Language)
+
+19. Tell me all times the warehouse had some kind of trouble. (Tests generalized filtering)
+20. What was Drone_X doing on June 9th? (Tests context resolution and device-time matching)
+21. Show me incidents where Camera_1 saw a problem in the middle of the night. (Tests interpretation of “middle of the night”)
+
+---
+
+Would you like me to generate answers for any of these using your dataset? Or do you want these turned into prompts formatted for a specific framework (e.g., LangChain, RAG pipeline, or eval dataset format)?
