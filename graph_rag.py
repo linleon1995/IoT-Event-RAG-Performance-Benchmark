@@ -203,18 +203,32 @@ def main():
     llm, tokenizer = load_llm(model_path='gemma-3-4b-it', framework='safetensors')
 
     prompt_template = """
-    As a professional surveillance system analyst, your task is to carefully analyze and synthesize the information from the event records provided below to answer the user's question.
+    You are an expert data assistant that specializes in generating SQL queries from natural language questions. 
 
-    Your answer must be based on a logical combination of the facts in the records. If the necessary facts to form a conclusion are not present, then and only then should you state: "Based on the provided data, I cannot answer this question."
+    The data comes from IoT event logs with the following schema:
 
-    [EVENT RECORDS]
-    {context}
+    - time (string in format "YYYY-MM-DD HH:MM")
+    - location (string, e.g., "factory_1", "warehouse_3")
+    - event_name (string, e.g., "fire_detected", "door_opened")
+    - device_name (string, e.g., "camera_A", "sensor_5")
+    - video (string, e.g., "video_42.mp4")
 
-    [QUESTION]
-    {question}
+    Your job is to convert a user’s question into a valid SQL query using this schema. Do not include any explanation. Assume the table is called `iot_events`. Always format the SQL query using standard SQL syntax.
 
-    [ANSWER]
     """
+    # prompt_template = """
+    # As a professional surveillance system analyst, your task is to carefully analyze and synthesize the information from the event records provided below to answer the user's question.
+
+    # Your answer must be based on a logical combination of the facts in the records. If the necessary facts to form a conclusion are not present, then and only then should you state: "Based on the provided data, I cannot answer this question."
+
+    # [EVENT RECORDS]
+    # {context}
+
+    # [QUESTION]
+    # {question}
+
+    # [ANSWER]
+    # """
     
     PROMPT = PromptTemplate(
         template=prompt_template, input_variables=["context", "question"]
