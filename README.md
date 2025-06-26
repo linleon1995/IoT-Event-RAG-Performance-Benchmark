@@ -1,4 +1,4 @@
-# IoT Event RAG Performance Benchmark
+# IoT Event RAG System
 
 ## Introduction
 
